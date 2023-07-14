@@ -1,0 +1,1 @@
+Congrats! Now you have NGINX-Proxy-Core up and running

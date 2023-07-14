@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configName }}
+data:
+  nginx.conf: |
+   worker_processes auto;
+   pid /var/run/nginx.pid;
+   include /etc/nginx/modules-enabled/*.conf;
+   
+   events {
+       worker_connections 768;
+   }
+   
+   http {
+       include /etc/nginx/mime.types;
+       default_type application/octet-stream;
+       sendfile on;
+       keepalive_timeout 65;
+   
+       server {
+           listen 80 default_server reuseport;
+           listen [::]:80 default_server reuseport;
+   
+           server_name _;
+   
+           location /bigbang {
+               proxy_pass https://dls2.top-movies2filmha.click/DonyayeSerial/series/The.Big.Bang.Theory/Soft.Sub/S03/720p.BluRay/The.Big.Bang.Theory.S03E01.720p.SoftSub.DonyayeSerial.mkv;
+           }
+   
+           location / {
+             root   /usr/share/nginx/html;
+             add_header Server "$hostname";
+             index  index.html index.htm;
+           }
+
+           # Other server blocks or configurations can be added here if needed
+           # Error handling
+           error_page 500 502 503 504 /50x.html;
+           location = /50x.html {
+               root /usr/share/nginx/html;
+           }
+       }
+   }

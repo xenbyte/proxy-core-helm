@@ -1,0 +1,58 @@
+# Default values for nginx-proxy-core.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 2
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "1.25.1"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+strategy: 
+  type: RollingUpdate
+  maxSruge: 1
+  maxUnavailable: 1
+
+podAnnotations: 
+
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+scriptName: nginx-script
+
+configName: nginx-config
+
+volumes:
+  - name: nginx-config-volume
+    configMap: 
+      name: nginx-config
+  - name: nginx-script-volume
+    configMap: 
+      name: nginx-script
+      defaultMode: 0777
+
+  

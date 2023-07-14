@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nginx-proxy-core.fullname" . }}
+  labels:
+    {{- include "nginx-proxy-core.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "nginx-proxy-core.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.maxUnavailable }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "nginx-proxy-core.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "/bin/bash -c '/etc/script.sh'"]
+      terminationGracePeriodSeconds: {{ .Values.image.terminationGracePeriodSeconds }}
+      volumes:
+      {{- range .Values.volumes }}
+      - name: {{ .name }}
+        {{- if .emptyDir }}
+        emptyDir: {}
+        {{- end }}
+        {{- if .configMap }}
+        configMap:
+          name: {{ .configMap.name }}
+          defaultMode : {{ .configMap.defaultMode }}
+        {{- end }}
+        {{- if .secret }}
+        secret:
+          secretName: {{ .secret.name }}
+        {{- end }}
+     {{- end }}
+    

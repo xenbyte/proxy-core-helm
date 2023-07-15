@@ -23,6 +23,19 @@ spec:
       labels:
         {{- include "nginx-proxy-core.selectorLabels" . | nindent 8 }}
     spec:
+      initContainers:
+        - name: download-files
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+           - |
+              apk add --no-cache curl
+              {{- range .Values.maxmindDB }}
+              curl -o /downloaded-files/{{ .fileName }} -z /downloaded-files/{{ .fileName }} "{{ .url }}"
+              {{- end }}
+          volumeMounts:
+            - name: downloaded-files
+              mountPath: /downloaded-files
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -42,21 +55,35 @@ spec:
             preStop:
               exec:
                 command: ["/bin/sh", "-c", "/bin/bash -c '/etc/script.sh'"]
+                  
+          volumeMounts:
+            - name: downloaded-files
+              mountPath: /etc/nginx/geoip2
+              readOnly: true
+            {{- range .Values.volumes }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
+            {{- end }}
+    
       terminationGracePeriodSeconds: {{ .Values.image.terminationGracePeriodSeconds }}
       volumes:
+        - name: downloaded-files
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc
       {{- range .Values.volumes }}
-      - name: {{ .name }}
-        {{- if .emptyDir }}
-        emptyDir: {}
-        {{- end }}
-        {{- if .configMap }}
-        configMap:
-          name: {{ .configMap.name }}
-          defaultMode : {{ .configMap.defaultMode }}
-        {{- end }}
-        {{- if .secret }}
-        secret:
-          secretName: {{ .secret.name }}
-        {{- end }}
+        - name: {{ .name }}
+          {{- if .emptyDir }}
+          emptyDir: {}
+          {{- end }}
+          {{- if .configMap }}
+          configMap:
+            name: {{ .configMap.name }}
+            defaultMode : {{ .configMap.defaultMode }}
+          {{- end }}
+          {{- if .secret }}
+          secret:
+            secretName: {{ .secret.name }}
+          {{- end }}
      {{- end }}
     

@@ -14,6 +14,14 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+maxmindDB:
+  - url: "http://54.38.198.78/GeoLite2-ASN.mmdb"
+    fileName: "GeoLite2-ASN.mmdb"
+  - url: "http://54.38.198.78/GeoLite2-City.mmdb"
+    fileName: "GeoLite2-City.mmdb"
+  - url: "http://54.38.198.78/GeoLite2-Country.mmdb"
+    fileName: "GeoLite2-Country.mmdb"
+
 strategy: 
   type: RollingUpdate
   maxSruge: 1
@@ -46,13 +54,25 @@ scriptName: nginx-script
 
 configName: nginx-config
 
+persistence:
+  enabled: true
+  storageClassName: "standard"
+  accessMode: "ReadWriteMany"
+  size: "10Gi"
+
 volumes:
   - name: nginx-config-volume
+    mountPath: /etc/nginx/nginx.conf
+    subPath: nginx.conf
     configMap: 
       name: nginx-config
   - name: nginx-script-volume
+    mountPath: /etc/script.sh
+    subPath: script.sh
     configMap: 
       name: nginx-script
       defaultMode: 0777
 
   
+
+
